@@ -3,7 +3,7 @@
 
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gdk  # noqa
+from gi.repository import Gtk, Gdk, GdkX11  # noqa
 
 
 outdated_str = "Out-dated"
@@ -32,7 +32,7 @@ class main_window(Gtk.Window):
         self.grid.attach(self.loginbar, 1, 2, 50, 1)
         self.grid.attach(self.toolbar, 1, 3, 50, 1)
         self.url_view.attach_in_grid(self.grid, 1, 4, 2, 1)
-        self.grid.attach(self.browser_window, 2, 4, 50, 1)
+        self.grid.attach(self.browser_window, 2, 4, 48, 1)
 
     def create_loginbar(self, username):
         login_label = Gtk.Label('Login:')
@@ -93,12 +93,19 @@ class main_window(Gtk.Window):
     def create_browser_window(self):
         sw = Gtk.ScrolledWindow(None, None)
 
-        # browser_handle = self.gui_handler.get_browser_handle()
+        socket = Gtk.Socket()
+        socket.show()
+        sw.add(socket)
+        print("Socket ID=", socket.get_id())
+
+        browser_handle = self.gui_handler.get_browser_handle()
         # print(dir(browser_handle))
         # socket = Gtk.Socket()
         # socket.add_id(int(browser_handle))
-        # sw.add_child(socket)
-        # # browser_window = Gdk.window_foreign_new(browser_handle)
+        #sw.add_child(socket)
+        display = Gdk.Display.get_default()
+        window = GdkX11.X11Window.foreign_new_for_display(display, int(browser_handle))
+        # browser_window = Gdk.Window.window_foreign_new(browser_handle)
         # print(browser_handle)
 
         return sw
