@@ -105,7 +105,7 @@ class main_window(Gtk.Window):
 
     def set_urls(self, urls):
         self.url_view.populate(urls)
-        self.url_view.create_or_update_filter_and_view()
+        self.url_view.update_treeview()
 
 
 class url_view(Gtk.Widget):
@@ -114,22 +114,19 @@ class url_view(Gtk.Widget):
         self.gui_handler = gui_handler
         super().__init__()
         self.populate([('bka', None), ('ba', True), ('ab', False)])
-        self.create_or_update_filter_and_view()
+        self.create_filter_and_view()
 
         self.scrollable_treelist = Gtk.ScrolledWindow()
         self.scrollable_treelist.set_vexpand(True)
         self.scrollable_treelist.set_hexpand(True)
-        self.scrollable_treelist.add(self.treeview)
+        self.scrollable_treelist.add_with_viewport(self.treeview)
 
-    def create_or_update_filter_and_view(self):
-        self.filter_values = self.generate_filter_values()
+    def create_filter_and_view(self):
+        self.filter_values = [outdated_str, uptodate_str]
         self.current_filter = None
         self.create_filter()
         self.create_treeview()
         self.create_buttons()
-
-    def generate_filter_values(self):
-        return [outdated_str, uptodate_str]
 
     def create_treeview(self):
         filtered_model = Gtk.TreeModelFilter()
@@ -190,6 +187,14 @@ class url_view(Gtk.Widget):
         for item in urls:
             self.liststore.append(list(item))
 
+    def update_treeview(self):
+        filtered_model = Gtk.TreeModelFilter()
+        sorted_model = Gtk.TreeModelSort.sort_new_with_model(self.filter)
+
+        filtered_model.set_visible_func(self.filter_func, self.liststore)
+
+        self.treeview.set_model(sorted_model)
+
     def filter_func(self, model, iter, data):
         if ((self.current_filter is None) or (self.current_filter == "None")):
             return True
@@ -205,6 +210,7 @@ class url_view(Gtk.Widget):
         else:
             self.current_filter = None
         self.filter.refilter()
+        self.update_treeview()
 
     def on_single_click(self, selection):
         (model, iter) = selection.get_selected()

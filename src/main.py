@@ -16,7 +16,7 @@ class runner:
         self.logger = logger
         self.database_handler = database_handler(self, logger=logger)
         self.browser_handler = browser_handler(self, logger=logger)
-        # self.browser_handler.create_driver()
+        self.browser_handler.create_driver()
         self.gui_handler = gui_handler(self, logger=logger)
 
     def run(self):
