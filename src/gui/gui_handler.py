@@ -3,8 +3,6 @@
 
 import logging
 
-from cefpython3 import cefpython as cef # move!
-
 from src.gui.main_window import main_window
 from src.gui.file_chooser import file_choooser_window
 
@@ -15,16 +13,15 @@ from gi.repository import Gtk  # noqa
 
 class gui_handler:
     def __init__(self, runner, logger=None):
-        cef.Initialize()
         self.runner = runner
         self.logger = logging.getLogger(logger.name + '.gui_handler')
         self.main_win = main_window(self)
-        #self.main_win.connect("destroy", Gtk.main_quit)
-        #self.main_win.show_all()
+        self.main_win.connect("destroy", Gtk.main_quit)
+        self.refresh_urls()
+        self.main_win.show_all()
 
     def run(self):
-        # Gtk.main()
-        SystemExit(self.main_win.run())
+        Gtk.main()
 
     def load_file(self, *args):
         response = self.run_file_chooser()
@@ -64,9 +61,18 @@ class gui_handler:
     def login(self, *args):
         return self.runner.login(*args)
 
-    # def run_meal_creator(self, *args):
-    #     date = self.main_win.get_active_date()
-    #     meal_editor(self, date)
-    #
-    # def update_day_view(self):
-    #     self.main_win.update_day_view()
+    def get_browser_handle(self, *args):
+        return self.runner.get_browser_handle()
+
+    def add_current_url(self, *args):
+        self.runner.add_current_url()
+
+    def revert_last_action(self, *args):
+        return self.runner.revert_last_action()
+
+    def get_urls(self):
+        return self.runner.get_urls_from_db()
+
+    def refresh_urls(self):
+        urls = self.runner.get_urls_from_db()
+        return self.main_win.set_urls(urls)

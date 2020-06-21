@@ -1,4 +1,4 @@
-# Copyright 2018, Jan Ole von Hartz <hartzj@cs.uni-freiburg.de>.
+# Copyright 2020, Jan Ole von Hartz <hartzj@cs.uni-freiburg.de>.
 
 
 from clint.textui import progress
@@ -26,18 +26,17 @@ class browser_handler:
         self.logger = logging.getLogger(logger.name + '.browser_handler')
         self.browser_options = Options()
 
-        try:
-            logger.info("Trying to import CEF.")
-            from cefpython3 import cefpython as cef
-            self.driver = webdriver.Chrome
-            path = "todo"
-        except ImportError:
-            logger.info("Failed. Falling back to external firefox.")
-            self.driver = webdriver.Firefox
-            self.browser_options.headless = headless
+        self.driver = webdriver.Firefox
+        self.browser_options.headless = headless
 
     def create_driver(self):
         self.driver = self.driver(options=self.browser_options)
+
+    def get_browser_handle(self):
+        return self.driver.current_window_handle
+
+    def get_current_url(self):
+        return self.driver.current_url
 
     def login(self, username, password):
         self.logger.info("Logging in at {}".format(login_url))

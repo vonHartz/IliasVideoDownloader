@@ -45,24 +45,14 @@ class database_handler:
     def db_saving_target_exist(self):
         return self.active_db_path is not None
 
-    def get_day(self, date):
-        return self.active_database.get_day(date)
-
-    def update_day(self, date, day, new_title, new_notes, new_meals):
-        return self.active_database.update_day(date, day, new_title,
-                                               new_notes, new_meals)
-
-    def update_meal(self, old_meal, new_meal):
-        return self.active_database.update_meal(old_meal, new_meal)
-
-    def select_day(self, date):
-        return self.active_database.get_day(date)
-
-    def get_all_dates(self):
-        return self.active_database.get_all_dates()
-
     def get_username(self):
         return self.active_database.get_username()
 
     def set_username(self, name):
         return self.active_database.set_username(name)
+
+    def add_url(self, url):
+        return self.active_database.add_url(url)
+
+    def get_urls(self):
+        return self.active_database.get_urls()

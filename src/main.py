@@ -16,6 +16,7 @@ class runner:
         self.logger = logger
         self.database_handler = database_handler(self, logger=logger)
         self.browser_handler = browser_handler(self, logger=logger)
+        # self.browser_handler.create_driver()
         self.gui_handler = gui_handler(self, logger=logger)
 
     def run(self):
@@ -46,6 +47,20 @@ class runner:
         username, pw = self.gui_handler.read_login()
         self.database_handler.set_username(username)
         self.browser_handler.login(username, pw)
+
+    def get_browser_handle(self):
+        return self.browser_handler.get_browser_handle()
+
+    def add_current_url(self):
+        url = self.browser_handler.get_current_url()
+        self.database_handler.add_url(url)
+        self.gui_handler.refresh_urls()
+
+    def revert_last_action(self):
+        return self.runner.revert_last_action()
+
+    def get_urls_from_db(self):
+        return self.database_handler.get_urls()
 
 
 def main():

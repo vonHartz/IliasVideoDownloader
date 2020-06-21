@@ -1,159 +1,38 @@
 # Copyright 2020, Jan Ole von Hartz <hartzj@cs.uni-freiburg.de>.
 
 
-from cefpython3 import cefpython as cef
-
-import os
-import platform
-import sys
-
-from gi.repository import GObject, GdkPixbuf  # noqa
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk, Gdk  # noqa
 
 
-WINDOWS = (platform.system() == "Windows")
-LINUX = (platform.system() == "Linux")
-MAC = (platform.system() == "Darwin")
-
-if LINUX:
-    import gi
-    gi.require_version('Gtk', '3.0')
-    from gi.repository import Gtk, Gdk, GdkX11
+outdated_str = "Out-dated"
+uptodate_str = "Up-to-date"
+column_list = ['URL', 'Up-to-Date']
 
 
-# class main_window(Gtk.Window):
-class main_window(Gtk.Application):
+class main_window(Gtk.Window):
 
     def __init__(self, gui_handler, window_title="ILIAS Downloader"):
         self.gui_handler = gui_handler
-        super().__init__(application_id='ilias_dl.gtk3')
-        # Gtk.Window.__init__(self, title=window_title)
-        self.browser = None
-        self.window = None
+        Gtk.Window.__init__(self, title=window_title)
+        self.set_default_size(1920, 1080)
+        self.set_border_width(3)
 
-    def run(self):
-        GObject.threads_init()
-        GObject.timeout_add(10, self.on_timer)
-        self.connect("startup", self.on_startup)
-        self.connect("activate", self.on_activate)
-        self.connect("shutdown", self.on_shutdown)
-        return super().run()
+        self.grid = Gtk.Grid()
+        self.add(self.grid)
 
-    def get_handle(self):
-        if LINUX:
-            return self.window.get_property("window").get_xid()
-        else:
-            raise NotImplementedError
+        self.menubar = self.create_menubar()
+        self.loginbar = self.create_loginbar(self.gui_handler.get_username())
+        self.toolbar = self.create_toolbar()
+        self.browser_window = self.create_browser_window()
+        self.url_view = url_view(self.gui_handler)
 
-
-    def on_timer(self):
-        cef.MessageLoopWork()
-        return True
-
-    def on_startup(self, *_):
-        self.window = Gtk.ApplicationWindow.new(self)
-        self.window.set_title("GTK 3 example (PyGObject)")
-        self.window.set_default_size(1600, 400)
-        self.window.connect("configure-event", self.on_configure)
-        self.window.connect("size-allocate", self.on_size_allocate)
-        self.window.connect("focus-in-event", self.on_focus_in)
-        self.window.connect("delete-event", self.on_window_close)
-        self.add_window(self.window)
-        self.setup_icon()
-
-    def on_activate(self, *_):
-        self.window.realize()
-        self.embed_browser()
-        print("after embed")
-        self.window.show_all()
-        print("after showall")
-        # Must set size of the window again after it was shown,
-        # otherwise browser occupies only part of the window area.
-        self.window.resize(*self.window.get_default_size())
-
-    def embed_browser(self):
-        window_info = cef.WindowInfo()
-        handle_to_use = self.get_handle()
-        display = Gdk.Display.get_default()
-        window = GdkX11.X11Window.foreign_new_for_display(display,handle_to_use)
-        self.gtk_window = gtk_window = Gtk.Window()
-        def callback(gtk_window,window):
-          print("inside callback")
-          gtk_window.set_window(window)
-          gtk_window.set_visual( gtk_window.get_screen().lookup_visual(0x21))
-        gtk_window.connect("realize",callback,window)
-        gtk_window.set_has_window(True)
-        gtk_window.show()
-
-        sw = Gtk.ScrolledWindow()
-        sw.show()
-        gtk_window.add(sw)
-        sw.set_visual( sw.get_screen().lookup_visual(0x21))
-        self.sw = sw
-
-        self.browser = cef.CreateBrowserSync(window_info,
-                                             url="https://www.google.com/")
-
-        window_info = cef.WindowInfo()
-        window_info.SetAsChild(sw.get_window().get_xid(),
-                               [0, 0, 1600, 400])
-
-    def on_configure(self, *_):
-        if self.browser:
-            self.browser.NotifyMoveOrResizeStarted()
-        return False
-
-    def on_size_allocate(self, _, data):
-        if self.browser:
-            if WINDOWS:
-                WindowUtils.OnSize(self.win32_handle, 0, 0, 0)
-            elif LINUX:
-                (x, y) = (0, 0)
-                (width, height) = self.window.get_size()
-                self.browser.SetBounds(x, y, width, height)
-                self.sw.get_window().move_resize(x, y, width, height)
-            self.browser.NotifyMoveOrResizeStarted()
-
-    def on_focus_in(self, *_):
-        if self.browser:
-            self.browser.SetFocus(True)
-            return True
-        return False
-
-    def on_window_close(self, *_):
-        if self.browser:
-            self.browser.CloseBrowser(True)
-            self.clear_browser_references()
-
-    def clear_browser_references(self):
-        # Clear browser references that you keep anywhere in your
-        # code. All references must be cleared for CEF to shutdown cleanly.
-        self.browser = None
-
-    def on_shutdown(self, *_):
-        cef.Shutdown()
-
-    def setup_icon(self):
-        icon = os.path.join(os.path.dirname(__file__), "resources", "gtk.png")
-        if not os.path.exists(icon):
-            return
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file(icon)
-        transparent = pixbuf.add_alpha(True, 0xff, 0xff, 0xff)
-        Gtk.Window.set_default_icon_list([transparent])
-
-        # self.set_border_width(3)
-        #
-        # self.grid = Gtk.Grid()
-        # self.add(self.grid)
-        #
-        # self.menubar = self.create_menubar()
-        # self.loginbar = self.create_loginbar(self.gui_handler.get_username())
-        # self.toolbar = self.create_toolbar()
-        # self.browser_window = self.create_browser_window()
-        #
-        # self.grid.attach(self.menubar, 1, 1, 50, 1)
-        # self.grid.attach(self.loginbar, 1, 2, 50, 1)
-        # self.grid.attach(self.toolbar, 1, 3, 50, 1)
-        # self.grid.attach(self.browser_window, 1, 4, 50, 1)
+        self.grid.attach(self.menubar, 1, 1, 50, 1)
+        self.grid.attach(self.loginbar, 1, 2, 50, 1)
+        self.grid.attach(self.toolbar, 1, 3, 50, 1)
+        self.url_view.attach_in_grid(self.grid, 1, 4, 2, 10)
+        self.grid.attach(self.browser_window, 2, 4, 50, 1)
 
     def create_loginbar(self, username):
         login_label = Gtk.Label('Login:')
@@ -202,39 +81,145 @@ class main_window(Gtk.Application):
         toolbar = Gtk.Toolbar.new()
 
         add_url_item = Gtk.ToolButton.new(None, 'Add current URL')
-        # new_meal_item.connect('clicked', self.gui_handler.run_meal_creator)
+        add_url_item.connect('clicked', self.gui_handler.add_current_url)
         toolbar.insert(add_url_item, -1)
 
         bar_item = Gtk.ToolButton.new_from_stock(Gtk.STOCK_OK)
-        bar_item.connect('clicked', self.on_menu)
+        bar_item.connect('clicked', self.gui_handler.revert_last_action)
         toolbar.insert(bar_item, -1)
 
         return toolbar
 
     def create_browser_window(self):
         sw = Gtk.ScrolledWindow(None, None)
-        sw.show()
-        sw.set_visual(sw.get_screen().lookup_visual(0x21))
+
+        # browser_handle = self.gui_handler.get_browser_handle()
+        # print(dir(browser_handle))
+        # socket = Gtk.Socket()
+        # socket.add_id(int(browser_handle))
+        # sw.add_child(socket)
+        # # browser_window = Gdk.window_foreign_new(browser_handle)
+        # print(browser_handle)
 
         return sw
 
-        sys.excepthook = cef.ExceptHook  # To shutdown CEF processes on error
-        cef.Initialize()
-        window_info = cef.WindowInfo()
-        self.get_window().get_xid()
-        window_info = cef.WindowInfo()
-        self.browser = cef.CreateBrowserSync(window_info,
-                                             url="https://www.google.com/")
+    def set_urls(self, urls):
+        self.url_view.populate(urls)
+        self.url_view.create_or_update_filter_and_view()
 
-        return sw
 
-    def on_menu(self, caller):
-        print(caller)
+class url_view(Gtk.Widget):
 
-    def get_active_date(self):
-        return self.calendar.get_date()
+    def __init__(self, gui_handler):
+        self.gui_handler = gui_handler
+        super().__init__()
+        self.populate([('bka', None), ('ba', True), ('ab', False)])
+        self.create_or_update_filter_and_view()
 
-    def update_day_view(self):
-        date = self.get_active_date()
-        self.day_view.populate(date)
-        self.day_view.create_or_update_filter_and_view()
+        self.scrollable_treelist = Gtk.ScrolledWindow()
+        self.scrollable_treelist.set_vexpand(True)
+        self.scrollable_treelist.set_hexpand(True)
+        self.scrollable_treelist.add(self.treeview)
+
+    def create_or_update_filter_and_view(self):
+        self.filter_values = self.generate_filter_values()
+        self.current_filter = None
+        self.create_filter()
+        self.create_treeview()
+        self.create_buttons()
+
+    def generate_filter_values(self):
+        return [outdated_str, uptodate_str]
+
+    def create_treeview(self):
+        filtered_model = Gtk.TreeModelFilter()
+        sorted_model = Gtk.TreeModelSort.sort_new_with_model(self.filter)
+
+        filtered_model.set_visible_func(self.filter_func, self.liststore)
+
+        self.treeview = Gtk.TreeView.new_with_model(sorted_model)
+
+        for i, column_title in enumerate(column_list):
+            renderer = Gtk.CellRendererText()
+            column = Gtk.TreeViewColumn(column_title, renderer, text=i)
+            column.set_sort_column_id(i)
+            self.treeview.append_column(column)
+
+        # single click row
+        self.selection = self.treeview.get_selection()
+        self.selection.connect("changed", self.on_single_click)
+
+        # double click row
+        self.treeview.connect("row-activated", self.on_double_click)
+
+    def create_buttons(self):
+        self.buttons = list()
+        for filter_value in self.filter_values:
+            button = Gtk.Button(filter_value)
+            self.buttons.append(button)
+            button.connect("clicked", self.on_selection_button_clicked)
+
+    def create_filter(self):
+        self.filter = self.liststore.filter_new()
+        self.filter.set_visible_func(self.filter_func)
+
+    def attach_next_to_in_grid(self, grid, sibling, position, width, height):
+        grid.attach_next_to(self.scrollable_treelist, sibling,
+                            position, width, height)
+        self.attach_buttons(grid)
+
+    def attach_in_grid(self, grid, left, top, width, height):
+        grid.attach(self.scrollable_treelist, left, top, width, height)
+        self.attach_buttons(grid)
+
+    def attach_buttons(self, grid):
+        if len(self.buttons) > 0:
+            grid.attach_next_to(self.buttons[0], self.scrollable_treelist,
+                                Gtk.PositionType.BOTTOM, 1, 1)
+            for i, button in enumerate(self.buttons[1:]):
+                grid.attach_next_to(button, self.buttons[i],
+                                    Gtk.PositionType.RIGHT, 1, 1)
+
+    def populate(self, urls=None):
+        self.liststore = Gtk.ListStore(str, bool)
+
+        if urls is None:
+            urls = self.gui_handler.get_urls()
+        if not isinstance(urls, list):
+            urls = [urls]
+        for item in urls:
+            self.liststore.append(list(item))
+
+    def filter_func(self, model, iter, data):
+        if ((self.current_filter is None) or (self.current_filter == "None")):
+            return True
+        else:
+            return model[iter][1] == self.current_filter
+
+    def on_selection_button_clicked(self, widget):
+        label = widget.get_label()
+        if label == outdated_str:
+            self.current_filter = False
+        elif label == uptodate_str:
+            self.current_filter = True
+        else:
+            self.current_filter = None
+        self.filter.refilter()
+
+    def on_single_click(self, selection):
+        (model, iter) = selection.get_selected()
+
+        if iter is not None:
+            print("\n %s" % (model[iter][0]))
+        else:
+            print("")
+        return True
+
+    def on_double_click(self, treeview, row_no, column):
+        (model, iter) = self.selection.get_selected()
+
+        print("\n %s" % (model[iter][0]))
+
+        # TODO open edit window
+
+        return True
