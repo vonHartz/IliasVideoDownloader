@@ -129,17 +129,11 @@ class url_view(Gtk.Widget):
         self.create_buttons()
 
     def create_treeview(self):
-        filtered_model = Gtk.TreeModelFilter()
-        sorted_model = Gtk.TreeModelSort.sort_new_with_model(self.filter)
-
-        filtered_model.set_visible_func(self.filter_func, self.liststore)
-
-        self.treeview = Gtk.TreeView.new_with_model(sorted_model)
+        self.treeview = Gtk.TreeView.new_with_model(self.filter)
 
         for i, column_title in enumerate(column_list):
             renderer = Gtk.CellRendererText()
             column = Gtk.TreeViewColumn(column_title, renderer, text=i)
-            column.set_sort_column_id(i)
             self.treeview.append_column(column)
 
         # single click row
