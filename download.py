@@ -15,16 +15,15 @@ login_url = ilias_url + "/shib_login.php"
 
 
 @click.command()
-@click.argument('page_url', nargs=1, required=True)
 @click.argument('rz_user', nargs=1, required=True)
 @click.argument('password', nargs=1, required=True)
-@click.argument('file_name', nargs=1, required=False)
-def main(page_url, file_name, rz_user, password):
+@click.argument('page_urls', nargs=-1, required=True)
+def main(rz_user, password, page_urls):
     """
     Logs into ILIAS and downloads the video specified by the given URL.
 
     Example:
-        $ python download.py ilias-adress.de/this-video.mp4 my_video.mp4 xxx pw
+        $ python download.py xxx pw ilias-adress.de/this-video.mp4
     """
 
     browser_options = Options()
@@ -43,37 +42,40 @@ def main(page_url, file_name, rz_user, password):
     # wait for succesful login and redirect
     WebDriverWait(driver, 30).until(EC.title_contains("ILIAS"))
 
-    # find video file in webpage
-    driver.get(page_url)
-    el = driver.find_element_by_xpath("//source[@type='video/mp4']")
-    video_url = el.get_attribute('src')
+    for page_url in page_urls:
+        # find video file in webpage
+        driver.get(page_url)
+        el = driver.find_element_by_xpath("//source[@type='video/mp4']")
+        video_url = el.get_attribute('src')
 
-    print("Extracted video URL {}".format(video_url))
-    video_url = video_url.split('.mp4')[0] + '.mp4'
+        print("Extracted video URL {}".format(video_url))
+        video_url = video_url.split('.mp4')[0] + '.mp4'
 
-    driver.get(video_url)
-    video_title = driver.title
-    file_name = file_name or video_title
+        driver.get(video_url)
+        video_title = driver.title
+        file_name = video_title
 
-    cookies = driver.get_cookies()
+        cookies = driver.get_cookies()
+
+        session = requests.Session()
+        for cookie in cookies:
+            session.cookies.set(cookie['name'], cookie['value'])
+
+        print("Requesting video.")
+        video = session.get(video_url, stream=True)  # , headers=headers)
+        print("ILIAS answering with response code {}.".format(
+            video.status_code))
+        print("Starting download to file {}".format(file_name))
+
+        with open(file_name, 'wb') as f:
+            total_length = int(video.headers.get('content-length'))
+            for chunk in progress.bar(video.iter_content(chunk_size=1024),
+                                      expected_size=(total_length/1024) + 1):
+                if chunk:
+                    f.write(chunk)
+                    f.flush()
+
     driver.quit()
-
-    session = requests.Session()
-    for cookie in cookies:
-        session.cookies.set(cookie['name'], cookie['value'])
-
-    print("Requesting video.")
-    video = session.get(video_url, stream=True)  # , headers=headers)
-    print("ILIAS answering with response code {}.".format(video.status_code))
-    print("Starting download to file {}".format(file_name))
-
-    with open(file_name, 'wb') as f:
-        total_length = int(video.headers.get('content-length'))
-        for chunk in progress.bar(video.iter_content(chunk_size=1024),
-                                  expected_size=(total_length/1024) + 1):
-            if chunk:
-                f.write(chunk)
-                f.flush()
 
 
 if __name__ == "__main__":
