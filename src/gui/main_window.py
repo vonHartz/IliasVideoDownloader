@@ -113,7 +113,7 @@ class url_view(Gtk.Widget):
     def __init__(self, gui_handler):
         self.gui_handler = gui_handler
         super().__init__()
-        self.populate([('bka', None), ('ba', True), ('ab', False)])
+        self.populate()
         self.create_filter_and_view()
 
         self.scrollable_treelist = Gtk.ScrolledWindow()
@@ -182,12 +182,9 @@ class url_view(Gtk.Widget):
             self.liststore.append(list(item))
 
     def update_treeview(self):
-        filtered_model = Gtk.TreeModelFilter()
-        sorted_model = Gtk.TreeModelSort.sort_new_with_model(self.filter)
-
-        filtered_model.set_visible_func(self.filter_func, self.liststore)
-
-        self.treeview.set_model(sorted_model)
+        self.filter = self.liststore.filter_new()
+        self.filter.set_visible_func(self.filter_func)
+        self.treeview.set_model(self.filter)
 
     def filter_func(self, model, iter, data):
         if ((self.current_filter is None) or (self.current_filter == "None")):
