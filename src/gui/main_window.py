@@ -31,7 +31,7 @@ class main_window(Gtk.Window):
         self.grid.attach(self.menubar, 1, 1, 50, 1)
         self.grid.attach(self.loginbar, 1, 2, 50, 1)
         self.grid.attach(self.toolbar, 1, 3, 50, 1)
-        self.url_view.attach_in_grid(self.grid, 1, 4, 2, 10)
+        self.url_view.attach_in_grid(self.grid, 1, 4, 2, 1)
         self.grid.attach(self.browser_window, 2, 4, 50, 1)
 
     def create_loginbar(self, username):
@@ -118,7 +118,7 @@ class url_view(Gtk.Widget):
 
         self.scrollable_treelist = Gtk.ScrolledWindow()
         self.scrollable_treelist.set_vexpand(True)
-        self.scrollable_treelist.set_hexpand(True)
+        self.scrollable_treelist.set_hexpand(False)
         self.scrollable_treelist.add_with_viewport(self.treeview)
 
     def create_filter_and_view(self):
