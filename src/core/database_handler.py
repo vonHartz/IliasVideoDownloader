@@ -25,17 +25,17 @@ class database_handler:
         self.active_db_path = path
 
     def save_file(self, source=None):
-        if source is None:
-            source = self.active_database
-        try:
-            pickle.dump(source, self.active_db_path)
-        except:
-            raise
+        target = self.active_db_path
+        self.save_file_as(target=target, source=source)
 
     def save_file_as(self, target, source=None):
         if source is None:
             source = self.active_database
-        pickle.dump(source, target)
+        try:
+            with open(target, 'wb') as pickle_file:
+                pickle.dump(source, pickle_file)
+        except:
+            raise
         self.active_db_path = target
 
     def new_file(self):

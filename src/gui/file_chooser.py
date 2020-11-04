@@ -45,8 +45,8 @@ class file_choooser_window(Gtk.Window):
         dialog.add_filter(filter_text)
 
         filter_py = Gtk.FileFilter()
-        filter_py.set_name("feast-planner files")
-        filter_py.add_mime_type("*.fpf")
+        filter_py.set_name("ilias-downloader files")
+        filter_py.add_mime_type("*.idf")
         dialog.add_filter(filter_py)
 
         filter_any = Gtk.FileFilter()

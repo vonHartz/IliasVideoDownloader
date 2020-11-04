@@ -5,6 +5,8 @@ import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GdkX11  # noqa
 
+# from cefpython3 import cefpython as cef
+
 
 outdated_str = "Out-dated"
 uptodate_str = "Up-to-date"
@@ -34,6 +36,26 @@ class main_window(Gtk.Window):
         self.url_view.attach_in_grid(self.grid, 1, 4, 2, 1)
         self.grid.attach(self.browser_window, 2, 4, 48, 1)
 
+        # cef.Initialize()
+        # self.realize()
+        #
+        # self.browser_window.show()
+        # self.add(self.browser_window)
+        # self.browser_window.set_visual(self.browser_window.get_screen().lookup_visual(0x21))
+        #
+        # handle = self.get_window().get_xid()
+        # window_info = cef.WindowInfo()
+        # display = Gdk.Display.get_default()
+        # window = GdkX11.X11Window.foreign_new_for_display(display, handle)
+        #
+        # self.browser = cef.CreateBrowserSync(window_info,
+        #                                      url="https://www.google.com/")
+        #
+        # window_info = cef.WindowInfo()
+        # # window_info.SetAsChild(self.browser_window.get_window().get_xid(),
+        # #                [0, 0, 1600, 400])
+        # window_info.SetAsChild(handle, [2, 4, 400, 400])
+
     def create_loginbar(self, username):
         login_label = Gtk.Label('Login:')
         self.user_entry = Gtk.Entry()
@@ -44,10 +66,16 @@ class main_window(Gtk.Window):
         login_button = Gtk.Button('Login')
         login_button.connect('clicked', self.gui_handler.login)
 
+        status_bar = Gtk.ProgressBar()
+        status_bar.set_show_text(True)
+        status_bar.set_text("Ready")
+
         loginbar = Gtk.HBox(False, 2)
         for item in [login_label, self.user_entry, self.pw_entry,
-                     login_button]:
+                     login_button, status_bar]:
             loginbar.pack_start(item, True, True, 10)
+
+        self.status_bar = status_bar
 
         return loginbar
 
@@ -91,28 +119,31 @@ class main_window(Gtk.Window):
         return toolbar
 
     def create_browser_window(self):
-        sw = Gtk.ScrolledWindow(None, None)
+        sw = Gtk.ScrolledWindow()
 
-        socket = Gtk.Socket()
-        socket.show()
-        sw.add(socket)
-        print("Socket ID=", socket.get_id())
+        # socket = Gtk.Socket()
+        # socket.show()
+        # sw.add(socket)
+        # print("Socket ID=", socket.get_id())
 
-        browser_handle = self.gui_handler.get_browser_handle()
+        #browser_handle = self.gui_handler.get_browser_handle()
         # print(dir(browser_handle))
         # socket = Gtk.Socket()
         # socket.add_id(int(browser_handle))
         #sw.add_child(socket)
-        display = Gdk.Display.get_default()
-        window = GdkX11.X11Window.foreign_new_for_display(display, int(browser_handle))
+        #display = Gdk.Display.get_default()
+        #window = GdkX11.X11Window.foreign_new_for_display(display, int(browser_handle))
         # browser_window = Gdk.Window.window_foreign_new(browser_handle)
         # print(browser_handle)
-
         return sw
 
     def set_urls(self, urls):
         self.url_view.populate(urls)
         self.url_view.update_treeview()
+
+    def set_status(self, status_string, fractal):
+        self.status_bar.set_text(status_string)
+        self.status_bar.set_fraction(fractal)
 
 
 class url_view(Gtk.Widget):

@@ -59,7 +59,12 @@ class gui_handler:
         return self.runner.set_username(name)
 
     def login(self, *args):
-        return self.runner.login(*args)
+        self.set_status("logging in", 0.5)
+        try:
+            self.runner.login(*args)
+            self.set_status("logged in", 1)
+        except:
+            raise
 
     def get_browser_handle(self, *args):
         return self.runner.get_browser_handle()
@@ -76,3 +81,6 @@ class gui_handler:
     def refresh_urls(self):
         urls = self.runner.get_urls_from_db()
         return self.main_win.set_urls(urls)
+
+    def set_status(self, status_string, fractal):
+        return self.main_win.set_status(status_string, fractal)
